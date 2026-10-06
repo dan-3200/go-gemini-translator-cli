@@ -6,10 +6,13 @@ type CtxMain struct {
 	Size struct {
 		Height, Width int
 	}
-	Err        error
-	Loading    bool
-	SwitchMode bool
-	TextInput  textinput.Model
+	Err         error
+	Loading     bool
+	Configuring bool
+	HasAPIKey   bool
+	SwitchMode  bool
+	TextInput   textinput.Model
+	APIKeyInput textinput.Model
 	CtxDict
 	CtxTranslate
 }

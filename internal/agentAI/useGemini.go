@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	Gemini "github.com/google/generative-ai-go/genai"
@@ -23,8 +22,8 @@ var (
 
 const modelName = "gemini-3.5-flash-lite"
 
-func InitGemini() error {
-	apiKey := strings.TrimSpace(os.Getenv("GEMINI_API_KEY"))
+func InitGemini(apiKey string) error {
+	apiKey = strings.TrimSpace(apiKey)
 	if apiKey == "" {
 		return errors.New("GEMINI_API_KEY não foi definida")
 	}
@@ -43,7 +42,10 @@ func Close() error {
 	if client == nil {
 		return nil
 	}
-	return client.Close()
+	err := client.Close()
+	client = nil
+	model = nil
+	return err
 }
 
 func UseTranslation(text string, switchLang bool) (string, error) {

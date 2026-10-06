@@ -12,12 +12,23 @@ type App struct {
 	m.CtxMain
 }
 
-func SetApp() *App {
-	var ti = textinput.New()
+func SetApp(needsSetup bool) *App {
+	ti := textinput.New()
 	ti.Placeholder = "..."
 	ti.Focus()
 	ti.CharLimit = 100
 	ti.Width = 100
+
+	apiKeyInput := textinput.New()
+	apiKeyInput.Placeholder = "Cole sua Gemini API key"
+	apiKeyInput.EchoMode = textinput.EchoPassword
+	apiKeyInput.EchoCharacter = '•'
+	apiKeyInput.CharLimit = 512
+	apiKeyInput.Width = 100
+	if needsSetup {
+		ti.Blur()
+		apiKeyInput.Focus()
+	}
 
 	return &App{
 		CtxMain: m.CtxMain{
@@ -25,8 +36,11 @@ func SetApp() *App {
 				Height: 0,
 				Width:  0,
 			},
-			TextInput:  ti,
-			SwitchMode: false,
+			TextInput:   ti,
+			APIKeyInput: apiKeyInput,
+			Configuring: needsSetup,
+			HasAPIKey:   !needsSetup,
+			SwitchMode:  false,
 			CtxTranslate: m.CtxTranslate{
 				Text:       "...",
 				SwitchLang: false,

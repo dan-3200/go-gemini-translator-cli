@@ -10,7 +10,7 @@ import (
 
 var infoHelp = css.NewStyle().
 	Foreground(css.Color("#606060")).
-	Render("[Ctrl+u] Clear • [Ctrl+a] Switch mode " + "• [Ctrl+t] Switch language " + "• [Esc] Exit")
+	Render("[Ctrl+u] Clear • [Ctrl+a] Switch mode • [Ctrl+t] Switch language • [Ctrl+k] API key • [Esc] Exit")
 
 var box = css.NewStyle().Padding(1)
 

@@ -4,6 +4,7 @@ package main
 import (
 	front "app/internal"
 	"fmt"
+	"os"
 
 	"github.com/joho/godotenv"
 )
@@ -11,9 +12,8 @@ import (
 // executa antes do 'main()'
 func init() {
 	// carregar variveis de ambiente
-	err := godotenv.Load()
-	if err != nil {
-		fmt.Printf("Erro ao carregar as variaveis de ambiente: %v", err)
+	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
+		fmt.Printf("Erro ao carregar as variáveis de ambiente: %v\n", err)
 	}
 }
 
