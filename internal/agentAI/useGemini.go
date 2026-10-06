@@ -5,6 +5,7 @@ import (
 	"app/pkg/utils"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -16,18 +17,43 @@ import (
 
 var (
 	ctx    = context.Background()
-	model *Gemini.GenerativeModel
+	client *Gemini.Client
+	model  *Gemini.GenerativeModel
 )
 
-func InitGemini() {
-	client, _ := Gemini.NewClient(ctx, option.WithAPIKey(os.Getenv("GEMINI_API_KEY")))
-	model = client.GenerativeModel("gemini-2.0-flash-lite")
+const modelName = "gemini-3.5-flash-lite"
+
+func InitGemini() error {
+	apiKey := strings.TrimSpace(os.Getenv("GEMINI_API_KEY"))
+	if apiKey == "" {
+		return errors.New("GEMINI_API_KEY não foi definida")
+	}
+
+	newClient, err := Gemini.NewClient(ctx, option.WithAPIKey(apiKey))
+	if err != nil {
+		return fmt.Errorf("criar cliente Gemini: %w", err)
+	}
+
+	client = newClient
+	model = client.GenerativeModel(modelName)
+	return nil
 }
 
-func UseTranslation(text string, switchLang bool) string {
-	if text == "" {
-		return "..."
+func Close() error {
+	if client == nil {
+		return nil
 	}
+	return client.Close()
+}
+
+func UseTranslation(text string, switchLang bool) (string, error) {
+	if text == "" {
+		return "...", nil
+	}
+	if model == nil {
+		return "", errors.New("cliente Gemini não inicializado")
+	}
+
 	langs := utils.Ternary(switchLang, "PT-BR to EN", "EN to PT-BR")
 	command := `Translate from %s: "%s". Return only the exact translation, no explanation.`
 	prompt := Gemini.Text(
@@ -36,24 +62,18 @@ func UseTranslation(text string, switchLang bool) string {
 
 	response, err := model.GenerateContent(ctx, prompt)
 	if err != nil {
-		return "Erro na requisição de conteudo"
+		return "", fmt.Errorf("gerar tradução: %w", err)
 	}
 
-	var translate = fmt.Sprintf("%s", response.Candidates[0].Content.Parts[0])
-
-	return translate
+	return responseText(response)
 }
 
-func UseDictionary(word string) models.DictionaryEntry {
+func UseDictionary(word string) (models.DictionaryEntry, error) {
 	if len(word) <= 0 {
-		return models.DictionaryEntry{
-			Word:         "Word",
-			PartOfSpeech: "Part of speech",
-			Definition:   "Definition",
-			Example:      "Example",
-			Synonyms:     "Synonyms",
-			Collocations: "Collocations",
-		}
+		return EmptyDictionaryEntry(), nil
+	}
+	if model == nil {
+		return models.DictionaryEntry{}, errors.New("cliente Gemini não inicializado")
 	}
 
 	command := `
@@ -82,18 +102,55 @@ func UseDictionary(word string) models.DictionaryEntry {
 
 	response, err := model.GenerateContent(ctx, prompt)
 	if err != nil {
-		return models.DictionaryEntry{}
+		return models.DictionaryEntry{}, fmt.Errorf("consultar dicionário: %w", err)
 	}
 
-	var dataJSON = fmt.Sprintf("%s", response.Candidates[0].Content.Parts[0])
-	// [ ] Otimizar
-	var cleanJSON = strings.ReplaceAll(dataJSON, "`", "")
-	cleanJSON = strings.ReplaceAll(cleanJSON, "json", "")
-
+	dataJSON, err := responseText(response)
+	if err != nil {
+		return models.DictionaryEntry{}, err
+	}
 	var data models.DictionaryEntry
-	if err := json.Unmarshal([]byte(cleanJSON), &data); err != nil {
-		return models.DictionaryEntry{Word: "Error Json.Unmarshal"}
+	if err := json.Unmarshal([]byte(cleanJSON(dataJSON)), &data); err != nil {
+		return models.DictionaryEntry{}, fmt.Errorf("interpretar resposta do dicionário: %w", err)
 	}
 
-	return data
+	return data, nil
+}
+
+func EmptyDictionaryEntry() models.DictionaryEntry {
+	return models.DictionaryEntry{
+		Word:         "Word",
+		PartOfSpeech: "Part of speech",
+		Definition:   "Definition",
+		Example:      "Example",
+		Synonyms:     "Synonyms",
+		Collocations: "Collocations",
+	}
+}
+
+func responseText(response *Gemini.GenerateContentResponse) (string, error) {
+	if response == nil || len(response.Candidates) == 0 || response.Candidates[0] == nil || response.Candidates[0].Content == nil {
+		return "", errors.New("Gemini não retornou conteúdo")
+	}
+
+	var text strings.Builder
+	for _, part := range response.Candidates[0].Content.Parts {
+		if value, ok := part.(Gemini.Text); ok {
+			text.WriteString(string(value))
+		}
+	}
+
+	result := strings.TrimSpace(text.String())
+	if result == "" {
+		return "", errors.New("Gemini retornou conteúdo vazio")
+	}
+	return result, nil
+}
+
+func cleanJSON(value string) string {
+	value = strings.TrimSpace(value)
+	value = strings.TrimPrefix(value, "```json")
+	value = strings.TrimPrefix(value, "```")
+	value = strings.TrimSuffix(value, "```")
+	return strings.TrimSpace(value)
 }

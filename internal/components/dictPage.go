@@ -25,6 +25,7 @@ func DictPage(it models.CtxMain) string {
 		"",
 		it.TextInput.View(),
 		"",
+		loadingOrError(it.Loading, it.Err),
 		fontColor(it.Dictionary.Word, colors.SteelBlue200),
 		fontColor(it.Dictionary.PartOfSpeech, colors.SteelBlue400),
 		fontColor(it.Dictionary.Definition, colors.Yellow),
@@ -40,4 +41,11 @@ func DictPage(it models.CtxMain) string {
 		content,
 		css.Place(it.Size.Width, it.Size.Height-rows, css.Left, css.Bottom, infoHelp),
 	)
+}
+
+func loadingOrError(loading bool, err error) string {
+	if loading {
+		return loadingMessage
+	}
+	return errorMessage(err)
 }

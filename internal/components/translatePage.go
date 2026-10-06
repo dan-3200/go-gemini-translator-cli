@@ -41,6 +41,7 @@ func TranslatePage(it models.CtxMain) string {
 		"",
 		it.TextInput.View(),
 		"",
+		u.Ternary(it.Loading, loadingMessage, errorMessage(it.Err)),
 		prefixStyle("To ")+textTranslate,
 	)
 

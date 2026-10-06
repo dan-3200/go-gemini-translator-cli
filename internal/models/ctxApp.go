@@ -7,6 +7,7 @@ type CtxMain struct {
 		Height, Width int
 	}
 	Err        error
+	Loading    bool
 	SwitchMode bool
 	TextInput  textinput.Model
 	CtxDict

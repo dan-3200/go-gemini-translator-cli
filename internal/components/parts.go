@@ -10,7 +10,7 @@ import (
 
 var infoHelp = css.NewStyle().
 	Foreground(css.Color("#606060")).
-	Render("[Ctrl+u] Clear • [Ctrl+a] Swicth mode " + "• [Ctrl+t] Switch language " + "• [Esc] Exit")
+	Render("[Ctrl+u] Clear • [Ctrl+a] Switch mode " + "• [Ctrl+t] Switch language " + "• [Esc] Exit")
 
 var box = css.NewStyle().Padding(1)
 
@@ -33,3 +33,14 @@ var fontColor = func(text string, color string) string {
 		Foreground(css.Color(color)).
 		Render(text)
 }
+
+var errorMessage = func(err error) string {
+	if err == nil {
+		return ""
+	}
+	return css.NewStyle().Foreground(css.Color("#ff6b6b")).Render("Error: " + err.Error())
+}
+
+var loadingMessage = css.NewStyle().
+	Foreground(css.Color("#ffd166")).
+	Render("Loading...")

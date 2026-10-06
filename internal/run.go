@@ -9,11 +9,19 @@ import (
 )
 
 func Run() {
-	agentAI.InitGemini()
+	if err := agentAI.InitGemini(); err != nil {
+		fmt.Printf("Erro ao iniciar o Gemini: %v\n", err)
+		return
+	}
+	defer func() {
+		if err := agentAI.Close(); err != nil {
+			fmt.Printf("Erro ao fechar o cliente Gemini: %v\n", err)
+		}
+	}()
 
-	var program = tea.NewProgram(engine.SetApp())
-	var _, err = program.Run()
+	program := tea.NewProgram(engine.SetApp())
+	_, err := program.Run()
 	if err != nil {
-		fmt.Printf("Erro: %v/n", err)
+		fmt.Printf("Erro: %v\n", err)
 	}
 }

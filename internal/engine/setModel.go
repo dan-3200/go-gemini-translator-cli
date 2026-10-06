@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"app/internal/agentAI"
 	m "app/internal/models"
 
 	"github.com/charmbracelet/bubbles/textinput"
@@ -31,14 +32,7 @@ func SetApp() *App {
 				SwitchLang: false,
 			},
 			CtxDict: m.CtxDict{
-				Dictionary: m.DictionaryEntry{
-					Word:         "Word",
-					PartOfSpeech: "Part of speech",
-					Definition:   "Definition",
-					Example:      "Example",
-					Synonyms:     "Synonyms",
-					Collocations: "Collocations",
-				},
+				Dictionary: agentAI.EmptyDictionaryEntry(),
 			},
 		},
 	}
